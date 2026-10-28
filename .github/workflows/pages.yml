@@ -8,6 +8,7 @@ on:
       - iron-crusade-alpha10-preview.zip
       - avalon-warframes-alpha101-preview.zip
       - avalon-warframes-alpha11c-preview.zip
+      - avalon-warframes-alpha11d-preview.zip
   workflow_dispatch:
 
 permissions:
@@ -153,6 +154,38 @@ jobs:
               assert not (dest/'sw.js').exists(), 'Preview must not install a service worker'
               print('Avalon Warframes Alpha.11c verified at /preview/avalon-alpha11c/')
           PY
+      - name: Extract Avalon Warframes Alpha.11d living battlefield preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha11d-preview.zip')
+          if not source.exists():
+              print('Optional Alpha.11d preview not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha11d')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Alpha.11d preview ZIP is corrupt'
+                  for info in z.infolist():
+                      path=Path(info.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, 'Unsafe preview path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              assert (dest/'index.html').is_file(), 'Alpha.11d entry missing'
+              assert (dest/'review.html').is_file(), 'Alpha.11d review missing'
+              html=(dest/'index.html').read_text()
+              assert 'Alpha.11d' in html, 'Unexpected build version'
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), f'Missing preview asset: {asset}'
+              for walker in ('redemptor','brutalis','ballistus'):
+                  for tier in ('low','mid','high'):
+                      assert (dest/'assets/models'/walker/(tier+'.glb')).is_file(), f'Missing {walker}/{tier}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 18, 'Missing preview audio'
+              assert not (dest/'sw.js').exists(), 'Preview must not install a service worker'
+              print('Avalon Warframes Alpha.11d verified at /preview/avalon-alpha11d/')
+          PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
@@ -162,3 +195,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
