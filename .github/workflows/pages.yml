@@ -7,6 +7,7 @@ on:
       - iron-crusade-pwa.zip
       - iron-crusade-alpha10-preview.zip
       - avalon-warframes-alpha101-preview.zip
+      - avalon-warframes-alpha11c-preview.zip
   workflow_dispatch:
 
 permissions:
@@ -119,6 +120,38 @@ jobs:
                       assert (dest/'assets/models'/chassis/(tier+'.glb')).exists(), f'Expected {chassis}/{tier} model'
               assert not (dest/'sw.js').exists(), 'Do not install a preview service worker'
               print('Avalon RPG Alpha.10.1 verified; Alpha.9e PWA and Alpha.10 preview preserved.')
+          PY
+      - name: Extract Avalon Warframes Alpha.11c environmental preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha11c-preview.zip')
+          if not source.exists():
+              print('Optional Alpha.11c preview not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha11c')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Alpha.11c preview ZIP is corrupt'
+                  for info in z.infolist():
+                      path=Path(info.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, 'Unsafe preview path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              assert (dest/'index.html').is_file(), 'Alpha.11c entry missing'
+              assert (dest/'review.html').is_file(), 'Alpha.11c review missing'
+              html=(dest/'index.html').read_text()
+              assert 'Alpha.11c' in html, 'Unexpected build version'
+              for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), f'Missing preview asset: {asset}'
+              for walker in ('redemptor','brutalis','ballistus'):
+                  for tier in ('low','mid','high'):
+                      assert (dest/'assets/models'/walker/(tier+'.glb')).is_file(), f'Missing {walker}/{tier}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 18, 'Missing preview audio'
+              assert not (dest/'sw.js').exists(), 'Preview must not install a service worker'
+              print('Avalon Warframes Alpha.11c verified at /preview/avalon-alpha11c/')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
