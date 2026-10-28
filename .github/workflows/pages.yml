@@ -9,6 +9,7 @@ on:
       - avalon-warframes-alpha101-preview.zip
       - avalon-warframes-alpha11c-preview.zip
       - avalon-warframes-alpha11d-preview.zip
+      - avalon-warframes-alpha11d-audio11b-preview.zip
   workflow_dispatch:
 
 permissions:
@@ -185,6 +186,39 @@ jobs:
               assert len(list((dest/'assets/audio').glob('*.wav'))) == 18, 'Missing preview audio'
               assert not (dest/'sw.js').exists(), 'Preview must not install a service worker'
               print('Avalon Warframes Alpha.11d verified at /preview/avalon-alpha11d/')
+          PY
+      - name: Extract Avalon Warframes Alpha.11d with Audio.11b preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha11d-audio11b-preview.zip')
+          if not source.exists():
+              print('Optional Audio.11b preview not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha11d-audio11b')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Audio.11b preview ZIP is corrupt'
+                  for info in z.infolist():
+                      path=Path(info.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, 'Unsafe preview path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              assert (dest/'index.html').is_file(), 'Audio.11b entry missing'
+              html=(dest/'index.html').read_text()
+              assert 'Alpha.11d + Audio.11b' in html, 'Incorrect preview build'
+              assert '__AW_AUDIO_NATIVE' in html, 'Missing audio compatibility layer'
+              assert (dest/'assets/avalon-audio11b.mjs').is_file(), 'Missing unified audio engine'
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), f'Missing preview asset: {asset}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 55, 'Incomplete audio bank'
+              for walker in ('redemptor','brutalis','ballistus'):
+                  for tier in ('low','mid','high'):
+                      assert (dest/'assets/models'/walker/(tier+'.glb')).is_file(), f'Missing {walker}/{tier}'
+              assert not (dest/'sw.js').exists(), 'Preview must not install a service worker'
+              print('Audio.11b preview verified at /preview/avalon-alpha11d-audio11b/')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
