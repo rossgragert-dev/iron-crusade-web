@@ -6,6 +6,7 @@ on:
     paths:
       - iron-crusade-pwa.zip
       - iron-crusade-alpha10-preview.zip
+      - avalon-warframes-alpha101-preview.zip
   workflow_dispatch:
 
 permissions:
@@ -83,6 +84,41 @@ jobs:
                       assert (out/'assets/models'/chassis/(quality+'.glb')).is_file(), f'Missing model: {chassis}/{quality}'
               assert not (out/'sw.js').exists(), 'Preview must not install a service worker that could interfere with Alpha.9e'
               print('Alpha.10 preview verified at /preview/alpha10/; production Alpha.9e unchanged.')
+          PY
+      - name: Extract Avalon RPG Alpha.10.1 test preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha101-preview.zip')
+          if not source.exists():
+              print('Optional Avalon Alpha.10.1 preview not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha101')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Avalon preview ZIP is corrupt'
+                  for info in z.infolist():
+                      p=Path(info.filename)
+                      assert not p.is_absolute() and '..' not in p.parts, 'Unsafe archive path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              assert (dest/'index.html').exists(), 'Avalon entry page missing'
+              html=(dest/'index.html').read_text()
+              for asset in re.findall(r'(?:src|href)="\./([^"]+)"',html):
+                  assert (dest/asset).exists(), 'Missing linked asset: '+asset
+              game=(dest/'assets/game-AV101.js')
+              assert 'ALPHA.10.1' in game.read_text(), 'Wrong preview version'
+              core=(dest/'assets/chunk-AV101.js').read_text()
+              assert 'dash:5' in core, 'Five-second boost missing'
+              assert (dest/'assets/avalon-runtime.js').exists(), 'RPG controller missing'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 18, 'Original sound previews missing'
+              for chassis in ('redemptor','brutalis','ballistus'):
+                  for tier in ('low','mid','high'):
+                      assert (dest/'assets/models'/chassis/(tier+'.glb')).exists(), f'Expected {chassis}/{tier} model'
+              assert not (dest/'sw.js').exists(), 'Do not install a preview service worker'
+              print('Avalon RPG Alpha.10.1 verified; Alpha.9e PWA and Alpha.10 preview preserved.')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

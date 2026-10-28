@@ -44,3 +44,14 @@ To test Claude's revised **Alpha.10** on iPhone:
 5. Compare city graphics, plasma/bolter/lascannon and missile impacts, audio, enemy animations and camera views.
 
 **Important:** Alpha.10 preview is online-only until approved. Do not replace `iron-crusade-pwa.zip`, do not uninstall the Alpha.9e Home Screen app, and don't delete the Cloudflare fallback yet. The approved Alpha.9e game and offline cache remain unchanged.
+
+## Avalon Warframes experimental RPG preview
+
+The experimental **Alpha.10.1** build lives alongside (not over) the approved Alpha.9e Home Screen PWA and Alpha.10 preview.
+
+1. Download the playable ZIP from ChatGPT and rename it **avalon-warframes-alpha101-preview.zip**.
+2. Upload that ZIP to this public repository's `main` branch (do not unzip).
+3. GitHub Actions verifies and publishes the preview at: https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha101/
+4. Test multi-touch camera switching while moving, five-second steerable boost, weapons and audio, pilot XP saving and skill upgrades.
+
+This is a test build **not** a public original-IP Avalon RPG release. Its inherited 40K-inspired models are retained only for internal QA until original Avalon armor and weapon assets are created. Do not use the production PWA icon to install this unapproved preview.
