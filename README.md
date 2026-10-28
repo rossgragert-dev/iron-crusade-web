@@ -67,3 +67,11 @@ Alpha.11c is an experimental **online-only** graphical update; it does not repla
 4. Open **https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha11c/** on your phone in Safari. For runtime stats use `?qa=1`.
 
 The approved Alpha.9e Home Screen app, Alpha.10 preview, and Alpha.10.1 preview are retained. Real iPhone FPS and touch tests are still pending.
+
+## Avalon Alpha.11b Audio Fidelity on Alpha.11d graphics
+
+This is an **isolated audio-only test preview** built on Alpha.11d graphics and gameplay. The ZIP must be named **exactly** `avalon-warframes-alpha11d-audio11b-preview.zip`; don't accept a duplicate `(1)` filename. Upload the unextracted ZIP to the root of `main` with **Add file → Upload files**. The Pages workflow automatically verifies 55 original WAV samples and publishes the test at:
+
+https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha11d-audio11b/
+
+On iPhone, test sound through a 120-second battle (bolters, missiles, explosions, booster, footfalls), mute/unmute, rotate and resume after tab/phone interruption. Audio sampling checks were run; real iPhone listening and performance approval remain pending. Production Alpha.9e and previous previews remain unchanged.
