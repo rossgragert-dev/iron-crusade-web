@@ -11,6 +11,8 @@ on:
       - avalon-warframes-alpha11d-preview.zip
       - avalon-warframes-alpha11d-audio11b-preview.zip
       - 'avalon-warframes-alpha11e-preview*.zip'
+      - avalon-warframes-alpha11f-preview.zip
+      - .github/workflows/pages.yml
   workflow_dispatch:
 
 permissions:
@@ -253,6 +255,39 @@ jobs:
                       assert (dest/'assets/models'/chassis/(lod+'.glb')).is_file(), f'Missing {chassis}/{lod}'
               assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
               print('Alpha.11e Skybound Arsenal isolated at /preview/avalon-alpha11e/')
+          PY
+      - name: Extract Avalon Warframes Alpha.11f Sovereign Arsenal preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          candidates=list(Path('.').glob('avalon-warframes-alpha11f-preview.zip'))
+          if not candidates:
+              print('Optional Alpha.11f preview ZIP not uploaded; skipping.')
+          else:
+              assert len(candidates)==1, 'Keep just one Alpha.11f ZIP, remove duplicate (1) versions'
+              source=candidates[0]
+              dest=Path('site/preview/avalon-alpha11f')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Alpha.11f preview ZIP corrupt'
+                  for info in z.infolist():
+                      path=Path(info.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, 'Unsafe path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              html=(dest/'index.html').read_text()
+              assert 'Alpha.11f' in html, 'Expected Alpha.11f preview'
+              assert (dest/'review.html').is_file()
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), f'Missing asset {asset}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 55
+              for chassis in ('redemptor','brutalis','ballistus'):
+                  for lod in ('low','mid','high'):
+                      assert (dest/'assets/models'/chassis/(lod+'.glb')).is_file(), f'Missing {chassis}/{lod}'
+              assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
+              print('Alpha.11f Sovereign Arsenal isolated at /preview/avalon-alpha11f/')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
