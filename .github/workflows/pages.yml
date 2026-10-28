@@ -8,6 +8,7 @@ on:
       - iron-crusade-alpha10-preview.zip
       - avalon-warframes-alpha101-preview.zip
       - avalon-warframes-alpha11a-preview.zip
+      - avalon-warframes-alpha11c-preview.zip
   workflow_dispatch:
 
 permissions:
@@ -155,6 +156,41 @@ jobs:
                       assert (dest/'assets/models'/chassis/(tier+'.glb')).exists(), f'Expected {chassis}/{tier} model'
               assert not (dest/'sw.js').exists(), 'Do not install a preview service worker'
               print('Avalon Alpha.11a HUD preview verified at /preview/avalon-alpha11a/; Alpha.9e PWA and earlier previews preserved.')
+          PY
+      - name: Extract Avalon Alpha.11c environmental realism preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha11c-preview.zip')
+          if not source.exists():
+              print('Optional Avalon Alpha.11c preview not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha11c')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Alpha.11c preview ZIP is corrupt'
+                  for info in z.infolist():
+                      p=Path(info.filename)
+                      assert not p.is_absolute() and '..' not in p.parts, 'Unsafe archive path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              assert (dest/'index.html').exists(), 'Alpha.11a entry page missing'
+              html=(dest/'index.html').read_text()
+              for asset in re.findall(r'(?:src|href)="\./([^"]+)"',html):
+                  assert (dest/asset).exists(), 'Missing linked asset: '+asset
+              scripts='\n'.join(f.read_text() for f in (dest/'assets').glob('*.js'))
+              assert '0.5.0-alpha.11c' in scripts, 'Wrong preview version'
+              assert 'dash:5' in scripts, 'Five-second boost missing'
+              for approved_speed in ('12.625','11.375','9.75'):
+                  assert approved_speed in scripts, f'Approved movement speed missing: {approved_speed}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 18, 'Sound previews missing'
+              for chassis in ('redemptor','brutalis','ballistus'):
+                  for tier in ('low','mid','high'):
+                      assert (dest/'assets/models'/chassis/(tier+'.glb')).exists(), f'Expected {chassis}/{tier} model'
+              assert not (dest/'sw.js').exists(), 'Do not install a preview service worker'
+              print('Avalon Alpha.11c environment preview verified at /preview/avalon-alpha11c/; Alpha.9e PWA and earlier previews preserved.')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

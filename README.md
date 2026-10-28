@@ -64,3 +64,13 @@ UI size / left-handed / simplified HUD settings). Gameplay is identical to Alpha
 - URL after this is merged: https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha11a/
 - Source: private `iron-crusade`, branch `development/avalon-warframes-major-overhaul`.
 - The approved Alpha.9e root PWA, `/preview/alpha10/` and `/preview/avalon-alpha101/` are unchanged. No service worker is installed by this preview.
+
+## Avalon Warframes Alpha.11c — environmental realism preview
+
+Separate online-only preview of the Alpha.11c visual overhaul (low-sun lighting with building shadows on every device,
+district air, denser city blocks, industrial detail, street dressing, storytelling scenes). Builds on Alpha.11a;
+gameplay, controls and pilot saves unchanged.
+
+- URL after this is merged: https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha11c/
+- Source: private `iron-crusade`, branch `development/alpha11c-environment-realism`.
+- Root Alpha.9e PWA and all earlier previews are unchanged; no service worker on this path.
