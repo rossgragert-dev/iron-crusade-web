@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - iron-crusade-pwa.zip
+      - iron-crusade-alpha10-preview.zip
   workflow_dispatch:
 
 permissions:
@@ -47,6 +48,41 @@ jobs:
               assert (out/path).is_file(), f'Missing required PWA file: {path}'
           assert 'ALPHA.9E' in (out/'assets/game-alpha9e.js').read_text(), 'Expected approved Alpha.9e game'
           print('Iron Crusade PWA package verified.')
+          PY
+      - name: Extract optional Alpha.10 sandbox preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('iron-crusade-alpha10-preview.zip')
+          if not source.exists():
+              print('No Alpha.10 preview ZIP supplied; preserving approved Alpha.9e only.')
+          else:
+              out=Path('site/preview/alpha10')
+              out.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Alpha.10 ZIP is corrupt'
+                  for entry in z.infolist():
+                      path=Path(entry.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, f'Unsafe path: {entry.filename}'
+                      assert (entry.external_attr >> 16) & 0o170000 != 0o120000, 'Symlinks are not allowed in preview archive'
+                  z.extractall(out)
+              assert (out/'index.html').is_file() and (out/'review.html').is_file(), 'Alpha.10 entry pages missing'
+              html=(out/'index.html').read_text()
+              for name in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
+                  assert (out/name).is_file(), f'Missing preview asset: {name}'
+              jsfiles=list((out/'assets').glob('*.js'))
+              assert jsfiles, 'No Alpha.10 JavaScript bundles'
+              scripts='\n'.join(f.read_text() for f in jsfiles)
+              assert '0.5.0-alpha.10' in scripts, 'Wrong preview version'
+              for approved_speed in ('12.625','11.375','9.75'):
+                  assert approved_speed in scripts, f'Approved movement speed missing: {approved_speed}'
+              for chassis in ('redemptor','brutalis','ballistus'):
+                  for quality in ('low','mid','high'):
+                      assert (out/'assets/models'/chassis/(quality+'.glb')).is_file(), f'Missing model: {chassis}/{quality}'
+              assert not (out/'sw.js').exists(), 'Preview must not install a service worker that could interfere with Alpha.9e'
+              print('Alpha.10 preview verified at /preview/alpha10/; production Alpha.9e unchanged.')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

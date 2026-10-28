@@ -30,3 +30,17 @@ iPhone Safari and Home Screen installations can have separate storage. Offline s
 Replace `iron-crusade-pwa.zip` in `main` and commit the change. GitHub Actions redeploys the public game. Change the service-worker cache version for each new release. Keep the previous ZIP available for rollback.
 
 Do **not** delete the live Cloudflare deployment until the GitHub Pages version has passed iPhone online and offline tests.
+
+## Isolated Alpha.10 preview (without changing the installed game)
+
+The primary game at the repository root stays on approved **Alpha.9e**.
+
+To test Claude's revised **Alpha.10** on iPhone:
+
+1. Download `iron-crusade-alpha10-preview.zip` from the ChatGPT handoff.
+2. Open this repository → **Add file → Upload files**, choose the ZIP, and commit to `main` (do not rename or unzip).
+3. GitHub Actions checks the ZIP and publishes a separate online preview.
+4. Open **https://rossgragert-dev.github.io/iron-crusade-web/preview/alpha10/** in Safari.
+5. Compare city graphics, plasma/bolter/lascannon and missile impacts, audio, enemy animations and camera views.
+
+**Important:** Alpha.10 preview is online-only until approved. Do not replace `iron-crusade-pwa.zip`, do not uninstall the Alpha.9e Home Screen app, and don't delete the Cloudflare fallback yet. The approved Alpha.9e game and offline cache remain unchanged.
