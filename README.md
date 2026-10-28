@@ -55,3 +55,15 @@ The experimental **Alpha.10.1** build lives alongside (not over) the approved Al
 4. Test multi-touch camera switching while moving, five-second steerable boost, weapons and audio, pilot XP saving and skill upgrades.
 
 This is a test build **not** a public original-IP Avalon RPG release. Its inherited 40K-inspired models are retained only for internal QA until original Avalon armor and weapon assets are created. Do not use the production PWA icon to install this unapproved preview.
+
+
+## Avalon Warframes Alpha.11c environmental test preview
+
+Alpha.11c is an experimental **online-only** graphical update; it does not replace the approved Alpha.9e PWA.
+
+1. Download `avalon-warframes-alpha11c-preview.zip` from the ChatGPT conversation.
+2. In this public repository choose **Add file → Upload files** and upload the ZIP to the root of `main` with its filename unchanged. **Do not unzip**.
+3. The existing **Publish Iron Crusade PWA** GitHub Action validates and extracts it into an isolated preview path.
+4. Open **https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha11c/** on your phone in Safari. For runtime stats use `?qa=1`.
+
+The approved Alpha.9e Home Screen app, Alpha.10 preview, and Alpha.10.1 preview are retained. Real iPhone FPS and touch tests are still pending.
