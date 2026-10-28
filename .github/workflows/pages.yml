@@ -1,0 +1,59 @@
+name: Publish Iron Crusade PWA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - iron-crusade-pwa.zip
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: iron-crusade-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout public release repository
+        uses: actions/checkout@v4
+      - name: Extract and verify PWA package
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          source=Path('iron-crusade-pwa.zip')
+          assert source.exists(), 'Upload iron-crusade-pwa.zip to the repository root'
+          out=Path('site')
+          out.mkdir(exist_ok=True)
+          with ZipFile(source) as z:
+              assert z.testzip() is None, 'Corrupt PWA ZIP'
+              for entry in z.infolist():
+                  name=entry.filename
+                  path=Path(name)
+                  assert not path.is_absolute() and '..' not in path.parts, f'Unsafe path: {name}'
+                  assert (entry.external_attr >> 16) & 0o170000 != 0o120000, f'Symlink not allowed: {name}'
+              z.extractall(out)
+          required=['index.html','offline-setup.html','manifest.webmanifest','sw.js','.nojekyll','assets/warMachines-alpha9e.js','icons/icon-192.png']
+          for path in required:
+              assert (out/path).is_file(), f'Missing required PWA file: {path}'
+          assert 'ALPHA.9E' in (out/'assets/game-alpha9e.js').read_text(), 'Expected approved Alpha.9e game'
+          print('Iron Crusade PWA package verified.')
+          PY
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
