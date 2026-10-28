@@ -10,7 +10,7 @@ on:
       - avalon-warframes-alpha11c-preview.zip
       - avalon-warframes-alpha11d-preview.zip
       - avalon-warframes-alpha11d-audio11b-preview.zip
-      - avalon-warframes-alpha11e-preview.zip
+      - 'avalon-warframes-alpha11e-preview*.zip'
   workflow_dispatch:
 
 permissions:
@@ -227,10 +227,12 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile
           import re
-          source=Path('avalon-warframes-alpha11e-preview.zip')
-          if not source.exists():
+          candidates=list(Path('.').glob('avalon-warframes-alpha11e-preview*.zip'))
+          if not candidates:
               print('Optional Alpha.11e preview ZIP not uploaded; skipping.')
           else:
+              assert len(candidates)==1, 'Keep just one Alpha.11e ZIP, remove duplicate (1) versions'
+              source=candidates[0]
               dest=Path('site/preview/avalon-alpha11e')
               dest.mkdir(parents=True,exist_ok=True)
               with ZipFile(source) as z:
