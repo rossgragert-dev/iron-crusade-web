@@ -144,7 +144,7 @@ jobs:
               assert (dest/'review.html').is_file(), 'Alpha.11c review missing'
               html=(dest/'index.html').read_text()
               assert 'Alpha.11c' in html, 'Unexpected build version'
-              for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',html):
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
                   assert (dest/asset).is_file(), f'Missing preview asset: {asset}'
               for walker in ('redemptor','brutalis','ballistus'):
                   for tier in ('low','mid','high'):
