@@ -55,3 +55,12 @@ The experimental **Alpha.10.1** build lives alongside (not over) the approved Al
 4. Test multi-touch camera switching while moving, five-second steerable boost, weapons and audio, pilot XP saving and skill upgrades.
 
 This is a test build **not** a public original-IP Avalon RPG release. Its inherited 40K-inspired models are retained only for internal QA until original Avalon armor and weapon assets are created. Do not use the production PWA icon to install this unapproved preview.
+
+## Avalon Warframes Alpha.11a — responsive HUD preview
+
+Separate online-only preview of the rebuilt portrait/landscape HUD (pilot badge, ability tray, Field Command menu,
+UI size / left-handed / simplified HUD settings). Gameplay is identical to Alpha.10.1 and pilot saves carry over.
+
+- URL after this is merged: https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha11a/
+- Source: private `iron-crusade`, branch `development/avalon-warframes-major-overhaul`.
+- The approved Alpha.9e root PWA, `/preview/alpha10/` and `/preview/avalon-alpha101/` are unchanged. No service worker is installed by this preview.
