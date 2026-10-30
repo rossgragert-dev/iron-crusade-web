@@ -419,7 +419,7 @@ jobs:
               for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
                   assert (dest/asset).is_file(), f'Missing asset {asset}'
               scripts='\n'.join(f.read_text() for f in (dest/'assets').glob('*.js'))
-              for marker in ('swordreview','rvToggle','quick','SOVEREIGN','fp-visibilitymodel'):
+              for marker in ('swordreview','rvToggle','quick','SOVEREIGN','fp-viewmodel'):
                   assert marker in scripts, f'Missing build marker: {marker}'
               assert len(list((dest/'assets/audio').glob('*.wav'))) == 55, 'Incomplete audio bank'
               for chassis in ('redemptor','brutalis','ballistus','sovereign'):
