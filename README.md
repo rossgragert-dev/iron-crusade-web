@@ -81,3 +81,7 @@ Isolated at `/preview/avalon-alpha11g-swordplay/`; the approved release and all 
 
 ## Alpha.11g cannon-arm + first-person melee preview (testing build, not approved)
 Isolated at `/preview/avalon-alpha11g-cannon-fp/` (the earlier swordplay preview stays at `/preview/avalon-alpha11g-swordplay/`). Built by the private repo's GitHub Action at source commit 27f3aee, then published by this repository's Pages workflow. Open with `?lab=1&quick=1`; use the on-screen REVIEW button for cameras, slow motion, edge debug and the four attacks, and the 1ST/3RD button for first person.
+
+
+## Alpha.11g first-person weapon presentation (test build)
+Isolated at `/preview/avalon-alpha11g-fp-view/` (earlier cannon-fp and swordplay previews preserved). Built by the private repo's GitHub Action at source commit acb1e6b. Open with `?lab=1&quick=1`. Not approved until tested on a physical iPhone.
