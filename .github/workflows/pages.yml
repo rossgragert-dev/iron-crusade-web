@@ -12,6 +12,7 @@ on:
       - avalon-warframes-alpha11d-audio11b-preview.zip
       - 'avalon-warframes-alpha11e-preview*.zip'
       - avalon-warframes-alpha11f-preview.zip
+      - avalon-warframes-alpha11g-swordplay-preview.zip
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -288,6 +289,40 @@ jobs:
                       assert (dest/'assets/models'/chassis/(lod+'.glb')).is_file(), f'Missing {chassis}/{lod}'
               assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
               print('Alpha.11f Sovereign Arsenal isolated at /preview/avalon-alpha11f/')
+          PY
+      - name: Extract Avalon Warframes Alpha.11g Sovereign swordplay preview (Development Lab, review mode)
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha11g-swordplay-preview.zip')
+          if not source.exists():
+              print('Optional Alpha.11g swordplay preview ZIP not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha11g-swordplay')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Alpha.11g swordplay ZIP corrupt'
+                  for info in z.infolist():
+                      path=Path(info.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, 'Unsafe path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              html=(dest/'index.html').read_text()
+              assert (dest/'review.html').is_file()
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), f'Missing asset {asset}'
+              scripts='\n'.join(f.read_text() for f in (dest/'assets').glob('*.js'))
+              for marker in ('swordreview','rvToggle','quick','SOVEREIGN'):
+                  assert marker in scripts, f'Missing build marker: {marker}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 55, 'Incomplete audio bank'
+              for chassis in ('redemptor','brutalis','ballistus','sovereign'):
+                  for lod in ('low','mid','high'):
+                      assert (dest/'assets/models'/chassis/(lod+'.glb')).is_file(), f'Missing {chassis}/{lod}'
+              assert (dest/'assets/models/weapons/grailblade/high.glb').is_file(), 'Missing Grailblade'
+              assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
+              print('Alpha.11g swordplay preview isolated at /preview/avalon-alpha11g-swordplay/')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

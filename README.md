@@ -75,3 +75,6 @@ This is an **isolated audio-only test preview** built on Alpha.11d graphics and 
 https://rossgragert-dev.github.io/iron-crusade-web/preview/avalon-alpha11d-audio11b/
 
 On iPhone, test sound through a 120-second battle (bolters, missiles, explosions, booster, footfalls), mute/unmute, rotate and resume after tab/phone interruption. Audio sampling checks were run; real iPhone listening and performance approval remain pending. Production Alpha.9e and previous previews remain unchanged.
+
+## Alpha.11g Sovereign swordplay preview (testing build, not approved)
+Isolated at `/preview/avalon-alpha11g-swordplay/`; the approved release and all earlier previews are untouched. Built by the private repo's GitHub Action (source commit 4d669df, run 41065365132), tests passed, then published by this repository's Pages workflow. Open with `?lab=1&quick=1` for the Development Lab with the Sovereign and Grailblade ready; the on-screen REVIEW button gives camera, 25% slow motion, edge debug and the four attacks.
