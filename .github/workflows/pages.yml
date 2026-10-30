@@ -13,6 +13,7 @@ on:
       - 'avalon-warframes-alpha11e-preview*.zip'
       - avalon-warframes-alpha11f-preview.zip
       - avalon-warframes-alpha11g-swordplay-preview.zip
+      - avalon-warframes-alpha11g-cannon-fp-preview.zip
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -324,6 +325,40 @@ jobs:
               assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
               print('Alpha.11g swordplay preview isolated at /preview/avalon-alpha11g-swordplay/')
           PY
+      - name: Extract Avalon Warframes Alpha.11g Sovereign cannon-arm + first-person melee preview (Development Lab, review mode)
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha11g-cannon-fp-preview.zip')
+          if not source.exists():
+              print('Optional Alpha.11g cannon-fp preview ZIP not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha11g-cannon-fp')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Alpha.11g cannon-fp ZIP corrupt'
+                  for info in z.infolist():
+                      path=Path(info.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, 'Unsafe path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              html=(dest/'index.html').read_text()
+              assert (dest/'review.html').is_file()
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), f'Missing asset {asset}'
+              scripts='\n'.join(f.read_text() for f in (dest/'assets').glob('*.js'))
+              for marker in ('swordreview','rvToggle','quick','SOVEREIGN','fp-viewmodel'):
+                  assert marker in scripts, f'Missing build marker: {marker}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 55, 'Incomplete audio bank'
+              for chassis in ('redemptor','brutalis','ballistus','sovereign'):
+                  for lod in ('low','mid','high'):
+                      assert (dest/'assets/models'/chassis/(lod+'.glb')).is_file(), f'Missing {chassis}/{lod}'
+              assert (dest/'assets/models/weapons/grailblade/high.glb').is_file(), 'Missing Grailblade'
+              assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
+              print('Alpha.11g swordplay preview isolated at /preview/avalon-alpha11g-cannon-fp/')
+          PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
@@ -352,24 +387,28 @@ jobs:
                     except Exception as e:
                         last=e; time.sleep(8)
                 raise SystemExit(f'FAIL {url}: {last}')
-            P=base+'/preview/avalon-alpha11g-swordplay/'
-            st,html=get(P+'index.html?lab=1&quick=1'); html=html.decode()
-            assert st==200 and 'Alpha' in html, 'entry page status %s, has Alpha=%s' % (st, 'Alpha' in html)
-            assets=sorted(set(re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html)))
-            extra=['review.html','model-review.html','assets/models/sovereign/low.glb','assets/models/sovereign/mid.glb','assets/models/sovereign/high.glb','assets/models/weapons/grailblade/high.glb','assets/models/redemptor/low.glb']
-            total=0
-            for a in assets+extra:
-                s,b=get(P+a); assert s==200 and len(b)>0, a; total+=len(b)
-            js=b''.join(get(P+a)[1] for a in assets if a.endswith('.js')).decode('utf8','ignore')
-            seen=set(a.split('/')[-1] for a in assets)
-            for _ in range(3):   # follow dynamically imported chunks referenced by name in the bundles
-              for n in sorted(set(re.findall(r'[\w]+-[\w-]{6,}\.js', js))-seen):
-                seen.add(n)
-                try:
-                  with urllib.request.urlopen(P+'assets/'+n, timeout=60) as r: js+=r.read().decode('utf8','ignore'); total+=0
-                except Exception: pass
-            for m in ('swordreview','rvToggle','quick'): assert m in js, 'missing marker '+m
-            print(f'preview OK: {len(assets)+len(extra)} files, {total/1e6:.1f} MB, entry {P}index.html?lab=1&quick=1')
+            def check(name, markers):
+              P=base+'/preview/'+name+'/'
+              st,html=get(P+'index.html?lab=1&quick=1'); html=html.decode()
+              assert st==200 and 'Alpha' in html, 'entry page status %s, has Alpha=%s' % (st, 'Alpha' in html)
+              assets=sorted(set(re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html)))
+              extra=['review.html','model-review.html','assets/models/sovereign/low.glb','assets/models/sovereign/mid.glb','assets/models/sovereign/high.glb','assets/models/weapons/grailblade/high.glb','assets/models/redemptor/low.glb']
+              total=0
+              for a in assets+extra:
+                  s,b=get(P+a); assert s==200 and len(b)>0, a; total+=len(b)
+              js=b''.join(get(P+a)[1] for a in assets if a.endswith('.js')).decode('utf8','ignore')
+              seen=set(a.split('/')[-1] for a in assets)
+              for _ in range(3):   # follow dynamically imported chunks referenced by name in the bundles
+                for n in sorted(set(re.findall(r'[\w]+-[\w-]{6,}\.js', js))-seen):
+                  seen.add(n)
+                  try:
+                    with urllib.request.urlopen(P+'assets/'+n, timeout=60) as r: js+=r.read().decode('utf8','ignore'); total+=0
+                  except Exception: pass
+              for m in markers: assert m in js, 'missing marker '+m
+              print(f'{name} OK: {len(assets)+len(extra)} files, {total/1e6:.1f} MB, entry {P}index.html?lab=1&quick=1')
+
+            check('avalon-alpha11g-cannon-fp', ('swordreview','rvToggle','quick','fp-viewmodel'))
+            check('avalon-alpha11g-swordplay', ('swordreview','rvToggle','quick'))   # the previous testing build stays available
             for old in ('/', '/preview/avalon-alpha11f/', '/preview/avalon-alpha11e/', '/preview/avalon-alpha11d/'):
                 s,_=get(base+old); assert s==200, old; print('still up:', base+old)
 

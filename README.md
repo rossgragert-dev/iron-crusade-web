@@ -78,3 +78,6 @@ On iPhone, test sound through a 120-second battle (bolters, missiles, explosions
 
 ## Alpha.11g Sovereign swordplay preview (testing build, not approved)
 Isolated at `/preview/avalon-alpha11g-swordplay/`; the approved release and all earlier previews are untouched. Built by the private repo's GitHub Action (source commit 4d669df, run 41065365132), tests passed, then published by this repository's Pages workflow. Open with `?lab=1&quick=1` for the Development Lab with the Sovereign and Grailblade ready; the on-screen REVIEW button gives camera, 25% slow motion, edge debug and the four attacks.
+
+## Alpha.11g cannon-arm + first-person melee preview (testing build, not approved)
+Isolated at `/preview/avalon-alpha11g-cannon-fp/` (the earlier swordplay preview stays at `/preview/avalon-alpha11g-swordplay/`). Built by the private repo's GitHub Action at source commit 27f3aee, then published by this repository's Pages workflow. Open with `?lab=1&quick=1`; use the on-screen REVIEW button for cameras, slow motion, edge debug and the four attacks, and the 1ST/3RD button for first person.
