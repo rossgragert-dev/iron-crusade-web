@@ -89,3 +89,7 @@ Isolated at `/preview/avalon-alpha11g-fp-view/` (earlier cannon-fp and swordplay
 
 ## Alpha.11g first-person visibility overhaul (test build)
 Isolated at `/preview/avalon-alpha11g-fp-visibility/` (earlier fp-view, cannon-fp and swordplay previews preserved). Built by the private repo's GitHub Action at source commit 145c41f. Open with `?lab=1&quick=1`. Not approved until tested on a physical iPhone.
+
+
+## Alpha.11g final Sovereign combat controls (test build)
+Isolated at `/preview/avalon-alpha11g-combat-controls/` (earlier previews preserved). Built by the private repo's GitHub Action at source commit fea2db6. Open with `?lab=1&quick=1`. Not approved until tested on a physical iPhone.
