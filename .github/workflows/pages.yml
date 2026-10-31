@@ -29,6 +29,7 @@ on:
       - 'avalon-sunlance-alpha11m-overlay/**'
       - 'avalon-cinderfall-alpha11n-overlay/**'
       - 'avalon-crownfall-alpha11o-overlay/**'
+      - 'avalon-cinematics-alpha11p-overlay/**'
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -865,6 +866,40 @@ jobs:
               assert (dest/asset).is_file(),'Missing inherited gameplay binary '+asset
           assert not (dest/'sw.js').exists(),'No isolated preview service worker'
           print('PASS Alpha.11o separate Pages preview:',n,'new compiled overlays and every accepted game asset')
+          PY
+      - name: Assemble isolated Alpha.11p cinematic combat preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,shutil
+          base=Path('site/preview/avalon-alpha11o-crownfall')
+          overlay=Path('avalon-cinematics-alpha11p-overlay')
+          dest=Path('site/preview/avalon-alpha11p-cinematics')
+          assert base.is_dir() and overlay.is_dir(), 'Missing baseline game or compiled cinematic overlay'
+          shutil.copytree(base,dest)
+          n=0
+          for file in overlay.rglob('*'):
+              if not file.is_file():continue
+              target=dest/file.relative_to(overlay)
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(file,target)
+              n+=1
+          for page in ('index.html','arsenal-review.html','review.html','model-review.html'):
+              assert (dest/page).is_file(), 'Missing '+page
+              for asset in re.findall(r'(?:src|href)="[.]/(assets/[^"]+)"',(dest/page).read_text()):
+                  assert (dest/asset).is_file(), 'Missing linked game asset '+asset
+          code=' '.join(f.read_text() for f in overlay.glob('assets/*.js'))
+          for marker in ('crownfallShot','crownfallImpact','missileImpact',
+                         'logres-thunder','crownfire-bastion','dawnspire-lance','iron-vow'):
+              assert marker in code, 'Missing real integrated cinematic function or approved model '+marker
+          for binary in ('assets/models/sovereign/high.glb',
+                         'assets/models/weapons/crown_of_logres/high.glb',
+                         'assets/audio/heavyFire-0.wav',
+                         'assets/audio/artillery-0.wav',
+                         'assets/audio/explosion-0.wav'):
+              assert (dest/binary).is_file(), 'Missing original playable binary '+binary
+          assert not (dest/'sw.js').exists(),'No service worker in isolated preview'
+          print('PASS Alpha.11p cinematic preview composition:',n,'new compiled text files, previous game assets retained')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

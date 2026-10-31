@@ -1,0 +1,9 @@
+{
+  "release": "Alpha.11p",
+  "title": "Cinematic Combat Effects",
+  "candidate_source_sha": "1bbf34b303f638874ae76002bacf33c485298160",
+  "source_branch": "development/alpha11p-cinematic-combat-effects",
+  "ci_run": 41231452577,
+  "baseline": "avalon-alpha11o-crownfall",
+  "notes": "Chromium test actual Sovereign Crownfall special and missile impact; original generated WAVs retained with runtime EQ; no altered gameplay mechanics or existing 3D GLBs"
+}

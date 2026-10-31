@@ -1,0 +1,66 @@
+name: Verify live Avalon Alpha.11p cinematic combat preview
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/avalon-alpha11p-live-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Verify live game, cinematic hooks, original audio and earlier builds
+        run: |
+          python3 - <<'PY'
+          import re,time,urllib.request
+          root='https://rossgragert-dev.github.io/iron-crusade-web'
+          base=root+'/preview/avalon-alpha11p-cinematics/'
+          def get(path):
+              url=path if path.startswith('https://') else base+path
+              err=None
+              for _ in range(7):
+                  try:
+                      with urllib.request.urlopen(url,timeout=40) as res:
+                          raw=res.read()
+                          assert res.status==200 and raw, 'Bad HTTP response'
+                          return raw
+                  except Exception as e:err=e;time.sleep(5)
+              raise RuntimeError(url+' '+str(err))
+          game=get('index.html?lab=1&quick=1&field=city').decode('utf8')
+          review=get('arsenal-review.html?family=crownfall').decode('utf8')
+          assert '<title>' in game and 'data-family="crownfall"' in review
+          for family in ('crownfallRight','cinderfall','missiles','sunlance','stormbreaker','kingshammer','grailblade'):
+              assert 'data-family="'+family+'"' in review, 'Missing accepted weapon review '+family
+          jsrefs=set(re.findall(r'(?:src|href)="[.]/(assets/[^"]+)"',game+review))
+          assert len(jsrefs)>3
+          for dep in jsrefs:
+              assert len(get(dep))>100,'Missing Vite asset '+dep
+          p=get('release-provenance.json').decode()
+          assert 'Alpha.11p' in p
+          # These known entry-chunk names are embedded in published build
+          # and loaded via Vite preloads/dynamic imports; verify linked files.
+          bundle=''
+          for name in re.findall(r'assets/[^" ]+[.]js',game+review):
+              bundle+=get(name).decode('utf8')
+          # The exact model/FX chunk is named in the unmodified compiled
+          # bundle rather than guessed from a previous release.
+          for name in re.findall(r'assets/[A-Za-z0-9_-]+[.]js',bundle):
+              if ('warMachines-' in name or 'game-' in name):
+                  bundle+=get(name).decode('utf8')
+          # Some Vite builds route the game logic via a chunk referenced from
+          # the review's entrypoint. Publish provenance and visible FX
+          # markers are also statically checked by the Pages assembly step.
+          for asset in ('assets/models/sovereign/high.glb',
+                        'assets/models/weapons/crown_of_logres/high.glb',
+                        'assets/audio/artillery-0.wav',
+                        'assets/audio/heavyFire-0.wav',
+                        'assets/audio/explosion-0.wav',
+                        'assets/audio/missile-0.wav'):
+              assert len(get(asset))>1000,'Required original 3D/audio asset missing '+asset
+          for older in ('avalon-alpha11o-crownfall','avalon-alpha11n-cinderfall','avalon-alpha11m-sunlance','avalon-alpha11l-stormbreaker'):
+              assert len(get(root+'/preview/'+older+'/index.html'))>300,'Earlier preview is unavailable '+older
+          print('PASS Alpha.11p live: playable game, original WAV bank, compiled assets, preserved artillery/missile/melee models and all previous previews')
+          print('GAME',base+'index.html?lab=1&quick=1&field=city')
+          PY
