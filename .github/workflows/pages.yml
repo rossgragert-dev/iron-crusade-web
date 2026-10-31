@@ -24,6 +24,7 @@ on:
       - avalon-arthurian-swords-playable.zip
       - 'avalon-arthurian-swords-overlay/**'
       - 'avalon-heritage-blades-v2-overlay/**'
+      - 'avalon-hammers-alpha11k-overlay/**'
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -692,6 +693,37 @@ jobs:
                   assert (dest/asset).is_file(), 'Missing game asset '+asset
           assert not (dest/'sw.js').exists(),'Do not install a preview service worker'
           print('Heritage Blades v2 isolated: eight replaced GLBs, textures and earlier previews retained')
+          PY
+      - name: Assemble isolated Alpha.11k chainswords and King's Hammers preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, re, json
+          base=Path('site/preview/avalon-heritage-blades-v2')
+          overlay=Path('avalon-hammers-alpha11k-overlay')
+          dest=Path('site/preview/avalon-alpha11k-hammers')
+          assert base.is_dir(), 'Missing accepted Heritage Blades v2 baseline'
+          assert overlay.is_dir(), 'Missing Alpha.11k compiled models'
+          shutil.copytree(base,dest)
+          changed=0
+          for source in overlay.rglob('*'):
+              if not source.is_file(): continue
+              rel=source.relative_to(overlay)
+              target=dest/rel
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(source,target)
+              changed+=1
+          for page in ('index.html','arsenal-review.html','review.html','model-review.html'):
+              assert (dest/page).is_file(), 'Missing '+page
+              for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',(dest/page).read_text()):
+                  assert (dest/asset).is_file(), 'Missing referenced asset '+asset
+          sourcejs=' '.join(p.read_text() for p in overlay.glob('assets/*.js'))
+          for marker in ('pendragon-anvil','sunfall-piledriver','grail-gatebreaker','railcutter','iron-vow'):
+              assert marker in sourcejs, 'Missing approved weapon '+marker
+          for sword in ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'):
+              assert (dest/'assets/models/weapons'/sword/'high.glb').is_file(), 'Missing Heritage Blade '+sword
+          assert not (dest/'sw.js').exists(), 'A preview may not install a service worker'
+          print('Alpha.11k complete:',changed,'compiled JS/HTML overlays, unchanged binary assets, separate preview.')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

@@ -1,0 +1,8 @@
+{
+  "release": "Alpha.11k",
+  "source_commit": "953a8f14196c2a6c5d1baab0bfd4f0bfd9fef308",
+  "browser_run": 41226146206,
+  "compiled_candidate": "60cfd933c4cfc1b4b2d87efec3d1e70fe7931e2d",
+  "base_public": "avalon-heritage-blades-v2",
+  "note": "Real WebGL-tested hammers and approved chainswords, additive isolated preview."
+}
