@@ -1,0 +1,8 @@
+{
+  "release": "Alpha.11m",
+  "source_revision": "5ab0e621a81957384345abd1d11c47c843de18f2",
+  "compiled_candidate": "202bb46218d9ab8e77b60abeb74ab3e1264f78ec",
+  "ci_run": 41228979792,
+  "base": "avalon-alpha11l-stormbreaker",
+  "notes": "WebGL-tested Sunlance and Sovereign Lance models composed over previously released assets; original PWA and earlier previews unchanged"
+}
