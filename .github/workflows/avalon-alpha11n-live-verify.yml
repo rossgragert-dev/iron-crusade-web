@@ -1,0 +1,66 @@
+name: Verify live Avalon Alpha.11n Cinderfall missile preview
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/avalon-alpha11n-live-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify published game, launcher menu, real models and prior versions
+        run: |
+          python3 - <<'PY'
+          import re,time,urllib.request
+          ROOT='https://rossgragert-dev.github.io/iron-crusade-web'
+          BASE=ROOT+'/preview/avalon-alpha11n-cinderfall/'
+          def get(path):
+              url=path if path.startswith('https://') else BASE+path
+              last=None
+              for _ in range(5):
+                  try:
+                      with urllib.request.urlopen(url, timeout=40) as response:
+                          data=response.read()
+                          assert response.status==200 and data, 'Unexpected HTTP response'
+                          return data
+                  except Exception as e:
+                      last=e;time.sleep(4)
+              raise RuntimeError(url+' '+str(last))
+          game=get('index.html?lab=1&quick=1&field=city&arsenalWeapon=cinderfall&cinderfallDesign=0').decode()
+          review=get('arsenal-review.html?family=cinderfall').decode()
+          assert 'Alpha' in game
+          for family in ('cinderfall','missiles','sunlance','stormbreaker','oathreaver','kingshammer'):
+              assert 'data-family="'+family+'"' in review,'Missing Forge review '+family
+          for page in ('review.html','model-review.html','release-provenance.json'):
+              assert len(get(page))>100
+          refs=set(re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',game+review))
+          assert refs,'No linked compiled JS assets'
+          chunks=[]
+          for asset in refs:
+              blob=get(asset)
+              assert len(blob)>100,'Missing linked file '+asset
+              if asset.endswith('.js'): chunks.append(blob.decode('utf-8'))
+          code=''.join(chunks)
+          # Inspect real dynamically imported model bundle; never treat
+          # arbitrary game save filenames as a required Vite asset.
+          names=set(re.findall(r'(?:warMachines|arsenalreview|game)-[A-Za-z0-9_-]{6,}\.js',code))
+          for n in sorted(names):
+              code+=get('assets/'+n).decode('utf-8')
+          for marker in ('crownfire-bastion','grey-hunt-talons','sunforge-cinderwall',
+                         'dawnspire-lance','crownwatch-bastion','pendragon-anvil','iron-vow'):
+              assert marker in code,'Missing integrated launcher '+marker
+          for item in ('assets/models/sovereign/high.glb',
+                       'assets/models/weapons/crown_of_logres/high.glb',
+                       'assets/models/weapons/grey_hunt_blade/high.glb',
+                       'assets/audio/heavyFire-0.wav'):
+              assert len(get(item))>1000,'Missing inherited game asset '+item
+          for old in ('avalon-alpha11m-sunlance','avalon-alpha11l-stormbreaker',
+                      'avalon-alpha11k-hammers','avalon-heritage-blades-v2'):
+              assert len(get(ROOT+'/preview/'+old+'/index.html'))>300,'Missing old preview '+old
+          print('PASS Alpha.11n live: all 3 real launcher designs, six-tube family menu, all inherited weapons, game binaries and earlier release URLs.')
+          print('REVIEW:',BASE+'arsenal-review.html?family=cinderfall')
+          print('GAME:',BASE+'index.html?lab=1&quick=1&field=city&arsenalWeapon=cinderfall&cinderfallDesign=0')
+          PY

@@ -27,6 +27,7 @@ on:
       - 'avalon-hammers-alpha11k-overlay/**'
       - 'avalon-stormbreaker-alpha11l-overlay/**'
       - 'avalon-sunlance-alpha11m-overlay/**'
+      - 'avalon-cinderfall-alpha11n-overlay/**'
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -791,6 +792,41 @@ jobs:
           assert (dest/'assets/models/sovereign/high.glb').is_file()
           assert not (dest/'sw.js').exists(), 'Do not install a service worker in an isolated preview'
           print('Alpha.11m Sunlance preview assembled:',n,'new compiled overlay files; earlier previews untouched')
+          PY
+      - name: Assemble isolated Alpha.11n Cinderfall missile launchers preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil,re
+          base=Path('site/preview/avalon-alpha11m-sunlance')
+          overlay=Path('avalon-cinderfall-alpha11n-overlay')
+          dest=Path('site/preview/avalon-alpha11n-cinderfall')
+          assert base.is_dir() and overlay.is_dir(), 'Missing accepted Alpha.11m candidate or new missile overlay'
+          shutil.copytree(base,dest)
+          count=0
+          for file in overlay.rglob('*'):
+              if not file.is_file():continue
+              rel=file.relative_to(overlay)
+              out=dest/rel
+              out.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(file,out)
+              count+=1
+          for name in ('index.html','arsenal-review.html','review.html','model-review.html'):
+              html=(dest/name).read_text()
+              for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), 'Missing '+asset+' referenced by '+name
+          review=(dest/'arsenal-review.html').read_text()
+          for family in ('cinderfall','missiles','sunlance','stormbreaker','kingshammer'):
+              assert 'data-family="'+family+'"' in review, 'Missing visible Forge '+family+' selector'
+          js=' '.join(p.read_text() for p in overlay.glob('assets/*.js'))
+          for weapon in ('crownfire-bastion','grey-hunt-talons','sunforge-cinderwall',
+                         'dawnspire-lance','crownwatch-bastion','pendragon-anvil','iron-vow'):
+              assert weapon in js, 'Missing integrated model '+weapon
+          for asset in ('assets/models/weapons/crown_of_logres/high.glb',
+                        'assets/models/sovereign/high.glb','assets/audio/heavyFire-0.wav'):
+              assert (dest/asset).is_file(),'Missing retained game binary '+asset
+          assert not (dest/'sw.js').exists(),'Do not install new service worker in preview'
+          print('PASS Alpha.11n Pages assembly:',count,'new compiled overlay files; separate version retained')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
