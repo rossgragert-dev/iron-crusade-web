@@ -618,7 +618,7 @@ jobs:
           assert (dest/'index.html').is_file() and (dest/'arsenal-review.html').is_file()
           for name in ('index.html','arsenal-review.html','review.html','model-review.html'):
               html=(dest/name).read_text()
-              for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',html):
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
                   assert (dest/asset).is_file(), 'Missing referenced asset '+asset
           code=''.join(p.read_text() for p in (dest/'assets').glob('*.js'))
           for name in ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'):
@@ -703,6 +703,7 @@ jobs:
               for m in markers: assert m in js, 'missing marker '+m
               print(f'{name} OK: {len(assets)+len(extra)} files, {total/1e6:.1f} MB, entry {P}index.html?lab=1&quick=1')
 
+            check('avalon-arthurian-swords', ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'), ('arsenal-review.html','release-provenance.json', 'assets/models/weapons/crown_of_logres/high.glb','assets/models/weapons/crown_of_logres/low.glb','assets/models/weapons/sunforged/high.glb','assets/models/weapons/grey_hunt_blade/high.glb','assets/models/weapons/lake_oath/high.glb'))
             check('avalon-alpha11i-arsenal-reforged', ('arsenal-forged','fp-viewmodel','aimdebug'), ('arsenal-review.html','release-provenance.json','assets/audio/heavyFire-0.wav','evidence/index.html','evidence/sovereign-ballistic-6s.mp4','evidence/sovereign-crownfall-6s.mp4','evidence/sovereign-cinderfall-4.8s.mp4'))
             check('avalon-alpha11h-third-person', ('swordreview','quick','fp-viewmodel','avalon-body','aimdebug'), tuple('assets/models/vanguard/%s/%s.glb'%(c,t) for c in ('warden','reaver','arbalest') for t in ('low','mid','high')))
             check('avalon-alpha11h', ('swordreview','rvToggle','quick','fp-viewmodel','lostpointercapture','legacyTitans','avalon-body'), tuple('assets/models/vanguard/%s/%s.glb'%(c,t) for c in ('warden','reaver','arbalest') for t in ('low','mid','high')))
