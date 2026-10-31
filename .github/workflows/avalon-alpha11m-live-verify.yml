@@ -1,0 +1,60 @@
+name: Verify live Avalon Alpha.11m Sunlance release
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/avalon-alpha11m-live-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Test published game, Sunlance Forge selector and preserved older previews
+        run: |
+          python3 - <<'PY'
+          import re,time,urllib.request
+          ROOT='https://rossgragert-dev.github.io/iron-crusade-web'
+          BASE=ROOT+'/preview/avalon-alpha11m-sunlance/'
+          def get(path):
+              url=path if path.startswith('https://') else BASE+path
+              last=None
+              for i in range(5):
+                  try:
+                      with urllib.request.urlopen(url,timeout=40) as response:
+                          data=response.read()
+                          assert response.status==200 and data,'Empty or invalid response'
+                          return data
+                  except Exception as e:
+                      last=e;time.sleep(4)
+              raise RuntimeError(url+' '+str(last))
+          game=get('index.html?lab=1&quick=1&field=city&arsenalWeapon=sunlance&sunlanceDesign=0').decode()
+          review=get('arsenal-review.html?family=sunlance').decode()
+          assert 'Alpha' in game and 'data-family="sunlance"' in review
+          assert 'data-family="sovereignLance"' in review
+          for page in ('review.html','model-review.html','release-provenance.json'):
+              assert len(get(page))>100
+          for asset in sorted(set(re.findall(r'(?:src|href)="\./(assets/[^"]+)"',game+review))):
+              assert len(get(asset))>100,'Missing referenced compiled asset '+asset
+          js=''
+          for asset in ('assets/warMachines-D5LkckxY.js',
+                        'assets/arsenalreview-Bwhd0AHC.js',
+                        'assets/game-wClwJKjW.js','assets/game-ieY6ALiM.js',
+                        'assets/modelreview-CTDjX3ii.js'):
+              js+=get(asset).decode('utf-8')
+          for model in ('dawnspire-lance','grey-hunt-needle','sunfall-capacitor',
+                        'crownwatch-bastion','grail-gatebreaker','iron-vow'):
+              assert model in js,'Missing integrated model '+model
+          for asset in ('assets/models/sovereign/high.glb',
+                        'assets/models/weapons/crown_of_logres/high.glb',
+                        'assets/models/weapons/grey_hunt_blade/high.glb',
+                        'assets/audio/heavyFire-0.wav'):
+              assert len(get(asset))>1000,'Missing accepted game asset '+asset
+          for name in ('avalon-alpha11l-stormbreaker','avalon-alpha11k-hammers',
+                       'avalon-heritage-blades-v2','avalon-alpha11h-third-person'):
+              assert len(get(ROOT+'/preview/'+name+'/index.html'))>300,'Earlier preview missing '+name
+          print('PASS live Alpha.11m: three Sunlance and Sovereign Lance designs, all compiled chunks, original game assets and earlier previews.')
+          print('REVIEW:',BASE+'arsenal-review.html?family=sunlance')
+          print('GAME:',BASE+'index.html?lab=1&quick=1&field=city&arsenalWeapon=sunlance&sunlanceDesign=0')
+          PY
