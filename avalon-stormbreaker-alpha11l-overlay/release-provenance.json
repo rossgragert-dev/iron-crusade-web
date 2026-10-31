@@ -1,0 +1,8 @@
+{
+  "release": "Alpha.11l",
+  "source_commit": "8bf9aaa8647d90ecaac90f8a9eb9762f42009680",
+  "browser_run": 41227150177,
+  "candidate_build": "86948e4825b78fe43f0bbc31b89a82d3459e3757",
+  "base": "avalon-alpha11k-hammers",
+  "description": "WebGL-tested three six-barrel Stormbreaker visual alternatives; separate additive preview"
+}

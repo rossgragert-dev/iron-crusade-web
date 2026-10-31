@@ -25,6 +25,7 @@ on:
       - 'avalon-arthurian-swords-overlay/**'
       - 'avalon-heritage-blades-v2-overlay/**'
       - 'avalon-hammers-alpha11k-overlay/**'
+      - 'avalon-stormbreaker-alpha11l-overlay/**'
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -724,6 +725,36 @@ jobs:
               assert (dest/'assets/models/weapons'/sword/'high.glb').is_file(), 'Missing Heritage Blade '+sword
           assert not (dest/'sw.js').exists(), 'A preview may not install a service worker'
           print('Alpha.11k complete:',changed,'compiled JS/HTML overlays, unchanged binary assets, separate preview.')
+          PY
+      - name: Assemble isolated Alpha.11l Stormbreaker cannon preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, re
+          base=Path('site/preview/avalon-alpha11k-hammers')
+          overlay=Path('avalon-stormbreaker-alpha11l-overlay')
+          dest=Path('site/preview/avalon-alpha11l-stormbreaker')
+          assert base.is_dir() and overlay.is_dir(), 'Missing integrated Alpha.11k base or Alpha.11l overlay'
+          shutil.copytree(base,dest)
+          count=0
+          for source in overlay.rglob('*'):
+              if not source.is_file(): continue
+              rel=source.relative_to(overlay)
+              target=dest/rel
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(source,target)
+              count+=1
+          for page in ('index.html','arsenal-review.html','review.html','model-review.html'):
+              assert (dest/page).is_file(), 'Missing '+page
+              for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',(dest/page).read_text()):
+                  assert (dest/asset).is_file(), 'Missing linked asset '+asset
+          code=' '.join(p.read_text() for p in overlay.glob('assets/*.js'))
+          for marker in ('crownwatch-bastion','grey-hunt-viper','sunforge-cyclone','pendragon-anvil','iron-vow'):
+              assert marker in code,'Required game weapon missing: '+marker
+          for sword in ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'):
+              assert (dest/'assets/models/weapons'/sword/'high.glb').is_file(), sword
+          assert not (dest/'sw.js').exists(), 'Do not install an isolated preview service worker'
+          print('Alpha.11l deployed as separate preview:',count,'compiled overlay files; previous versions unchanged')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
