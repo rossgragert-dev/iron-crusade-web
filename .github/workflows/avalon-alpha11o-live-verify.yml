@@ -1,0 +1,67 @@
+name: Verify live Avalon Alpha.11o Crownfall artillery
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/avalon-alpha11o-live-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate published bombards, compiled game assets and old releases
+        run: |
+          python3 - <<'PY'
+          import re,time,urllib.request
+          from pathlib import Path
+          ROOT='https://rossgragert-dev.github.io/iron-crusade-web'
+          BASE=ROOT+'/preview/avalon-alpha11o-crownfall/'
+          def get(file):
+              url=file if file.startswith('https://') else BASE+file
+              last=None
+              for _ in range(7):
+                  try:
+                      with urllib.request.urlopen(url,timeout=40) as r:
+                          raw=r.read()
+                          assert r.status==200 and raw,'HTTP or empty response'
+                          return raw
+                  except Exception as exc:
+                      last=exc;time.sleep(5)
+              raise RuntimeError(url+' '+str(last))
+          game=get('index.html?lab=1&quick=1&field=city&arsenalWeapon=crownfall&crownfallDesign=0').decode()
+          review=get('arsenal-review.html?family=crownfall').decode()
+          assert '<title>' in game
+          for name in ('crownfall','crownfallRight','missiles','cinderfall','sunlance','stormbreaker','oathreaver','kingshammer'):
+              assert 'data-family="'+name+'"' in review,'Forge selector missing '+name
+          for page in ('review.html','model-review.html'):
+              assert len(get(page))>100,'Missing '+page
+          htmlrefs=set(re.findall(r'(?:src|href)="[.]/(assets/[^"]+)"',game+review))
+          assert len(htmlrefs)>=3,'Vite entrypoint references not discovered'
+          for asset in sorted(htmlrefs):
+              assert len(get(asset))>100,'Missing HTML dependency '+asset
+          parts=[]
+          files=list(Path('avalon-crownfall-alpha11o-overlay/assets').glob('*.js'))
+          assert files,'No compiled artillery JS in release overlay'
+          for asset in files:
+              contents=get('assets/'+asset.name)
+              parts.append(contents.decode('utf-8'))
+          code=''.join(parts)
+          for marker in ('logres-thunder','grey-hunt-longstrike','sunfall-siegehammer',
+                         'crownfire-bastion','dawnspire-lance','crownwatch-bastion',
+                         'pendragon-anvil','iron-vow'):
+              assert marker in code,'Missing actual game model '+marker
+          for asset in ('assets/models/sovereign/high.glb',
+                        'assets/models/weapons/crown_of_logres/high.glb',
+                        'assets/models/weapons/grey_hunt_blade/high.glb',
+                        'assets/audio/heavyFire-0.wav'):
+              assert len(get(asset))>1000,'Missing inherited game binary '+asset
+          for prev in ('avalon-alpha11n-cinderfall','avalon-alpha11m-sunlance',
+                       'avalon-alpha11l-stormbreaker','avalon-alpha11k-hammers'):
+              assert len(get(ROOT+'/preview/'+prev+'/index.html'))>300,'Original preview missing '+prev
+          print('PASS live Alpha.11o: three Crownfall designs, both weapon IDs, all original gameplay assets, and earlier releases')
+          print('REVIEW',BASE+'arsenal-review.html?family=crownfall')
+          print('GAME',BASE+'index.html?lab=1&quick=1&field=city&arsenalWeapon=crownfall&crownfallDesign=0')
+          PY

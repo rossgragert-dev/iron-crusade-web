@@ -1,0 +1,9 @@
+{
+  "release": "Alpha.11o",
+  "source": "development/alpha11o-crownfall-bombardment",
+  "candidate_sha": "b7b0c0fef32e5c6db69ea617299b7e0fa4246fa6",
+  "ci_run": 41230628477,
+  "source_revision": "c2cf7c05dfbb6e07f2c3fbe21fadf893652cc5d2",
+  "base": "avalon-alpha11n-cinderfall",
+  "note": "Three genuine game-ready Crownfall artillery models. Visual-only; original gameplay, previous weapon art and stored binary assets retained."
+}
