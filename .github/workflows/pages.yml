@@ -21,6 +21,7 @@ on:
       - avalon-warframes-alpha11h-third-person-preview.zip
       - avalon-warframes-alpha11i-arsenal-reforged-overlay.zip
       - avalon-warframes-alpha11i-evidence.zip
+      - 'avalon-arthurian-swords-overlay/**'
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -590,6 +591,39 @@ jobs:
                       assert not p.is_absolute() and '..' not in p.parts
                       assert (info.external_attr>>16)&0o170000 != 0o120000
                   z.extractall(dest)
+          PY
+      - name: Assemble isolated Arthurian Swords gameplay preview
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, re, json
+          base=Path('site/preview/avalon-alpha11i-arsenal-reforged')
+          src=Path('avalon-arthurian-swords-overlay')
+          dest=Path('site/preview/avalon-arthurian-swords')
+          assert base.is_dir(), 'Approved Alpha.11i preview missing'
+          assert src.is_dir(), 'Arthurian sword overlay missing'
+          shutil.copytree(base,dest)
+          n=0
+          for item in src.rglob('*'):
+              if not item.is_file(): continue
+              rel=item.relative_to(src)
+              target=dest/rel
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(item,target)
+              n+=1
+          for name in ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'):
+              for tier in ('low','high'):
+                  assert (dest/'assets/models/weapons'/name/(tier+'.glb')).is_file(), name+' '+tier
+          assert (dest/'index.html').is_file() and (dest/'arsenal-review.html').is_file()
+          for name in ('index.html','arsenal-review.html','review.html','model-review.html'):
+              html=(dest/name).read_text()
+              for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), 'Missing referenced asset '+asset
+          code=''.join(p.read_text() for p in (dest/'assets').glob('*.js'))
+          for name in ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'):
+              assert name in code, 'Missing selectable 3D blade '+name
+          assert not (dest/'sw.js').exists(), 'Isolated preview cannot replace the PWA service worker'
+          print('Avalon Arthurian Swords preview verified:',n,'overlay files; earlier previews preserved')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

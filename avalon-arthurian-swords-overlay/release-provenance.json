@@ -1,0 +1,14 @@
+{
+  "project": "Avalon Warframes",
+  "release": "Arthurian Sword Models — separate iPhone preview",
+  "origin_private_commit": "d465db125ec6d76ec7f10d72202f259be7f79afb",
+  "origin_static_preview_commit": "e96cbf88c64ee9c0592e01d40e62bfb52f4843a8",
+  "models": [
+    "crown_of_logres",
+    "sunforged",
+    "grey_hunt_blade",
+    "lake_oath"
+  ],
+  "physical_iPhone_verified": false,
+  "prior_versions_untouched": true
+}
