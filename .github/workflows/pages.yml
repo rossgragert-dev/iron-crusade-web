@@ -647,7 +647,7 @@ jobs:
                   z.extractall(dest)
               for html in ('index.html','arsenal-review.html'):
                   assert (dest/html).is_file(), 'Missing '+html
-                  for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',(dest/html).read_text()):
+                  for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',(dest/html).read_text()):
                       assert (dest/asset).is_file(), 'Missing '+asset
               for blade in ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'):
                   for tier in ('high','low'):
