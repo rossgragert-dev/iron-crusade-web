@@ -1,0 +1,9 @@
+{
+  "name": "Avalon Warframes Heritage Blades v2",
+  "private_source_commit": "6d01321100145a9dfe6713e41dfbe9e30ac759ee",
+  "reference": "Approved Arthurian four-sword concept, October 31 2026",
+  "asset_count": 8,
+  "model_changes": "straight blade edges, final 15% taper, PBR surface texture maps, rebuilt crown/sun/emerald/fleur ornaments",
+  "existing_mechanics_unchanged": true,
+  "physical_iphone_qa": false
+}
