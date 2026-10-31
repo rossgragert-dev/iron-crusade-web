@@ -36,7 +36,7 @@ jobs:
               assert 'data-family="'+family+'"' in review,'Missing Forge review '+family
           for page in ('review.html','model-review.html','release-provenance.json'):
               assert len(get(page))>100
-          refs=set(re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',game+review))
+          refs=set(re.findall(r'(?:src|href)="[.]/(assets/[^"]+)"',game+review))
           assert refs,'No linked compiled JS assets'
           chunks=[]
           for asset in refs:
@@ -46,7 +46,7 @@ jobs:
           code=''.join(chunks)
           # Inspect real dynamically imported model bundle; never treat
           # arbitrary game save filenames as a required Vite asset.
-          names=set(re.findall(r'(?:warMachines|arsenalreview|game)-[A-Za-z0-9_-]{6,}\.js',code))
+          names=set(re.findall(r'(?:warMachines|arsenalreview|game)-[A-Za-z0-9_-]{6,}[.]js',code))
           for n in sorted(names):
               code+=get('assets/'+n).decode('utf-8')
           for marker in ('crownfire-bastion','grey-hunt-talons','sunforge-cinderwall',
