@@ -1,0 +1,11 @@
+{
+  "release": "Alpha.11n",
+  "name": "Cinderfall six-cell launcher variants",
+  "source_branch": "development/alpha11n-cinderfall-missiles",
+  "source_commit": "77170ff2c46c60b8a419f64d5341818c652b4cbb",
+  "rendered_candidate_sha": "8d0900d01718268d8b45d1c6980556ceddcf36de",
+  "ci_run": 41229790767,
+  "base": "avalon-alpha11m-sunlance",
+  "accepted_heritage": "All prior swords, chainblades, hammers, Stormbreaker and Sunlance remain unchanged",
+  "gameplay": "Six original missile sockets; no mechanical, camera, projectile, VFX, SFX or save changes"
+}
