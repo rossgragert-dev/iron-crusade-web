@@ -21,6 +21,7 @@ on:
       - avalon-warframes-alpha11h-third-person-preview.zip
       - avalon-warframes-alpha11i-arsenal-reforged-overlay.zip
       - avalon-warframes-alpha11i-evidence.zip
+      - avalon-arthurian-swords-playable.zip
       - 'avalon-arthurian-swords-overlay/**'
       - .github/workflows/pages.yml
   workflow_dispatch:
@@ -624,6 +625,35 @@ jobs:
               assert name in code, 'Missing selectable 3D blade '+name
           assert not (dest/'sw.js').exists(), 'Isolated preview cannot replace the PWA service worker'
           print('Avalon Arthurian Swords preview verified:',n,'overlay files; earlier previews preserved')
+          PY
+      - name: Extract isolated Avalon Arthurian swords playable candidate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-arthurian-swords-playable.zip')
+          if not source.exists():
+              print('No optional Arthurian Swords candidate; approved previews unchanged.')
+          else:
+              dest=Path('site/preview/avalon-arthurian-swords')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Sword preview ZIP corrupt'
+                  for info in z.infolist():
+                      p=Path(info.filename)
+                      assert not p.is_absolute() and '..' not in p.parts
+                      assert (info.external_attr>>16)&0o170000 != 0o120000
+                  z.extractall(dest)
+              for html in ('index.html','arsenal-review.html'):
+                  assert (dest/html).is_file(), 'Missing '+html
+                  for asset in re.findall(r'(?:src|href)="\\./(assets/[^"]+)"',(dest/html).read_text()):
+                      assert (dest/asset).is_file(), 'Missing '+asset
+              for blade in ('crown_of_logres','sunforged','grey_hunt_blade','lake_oath'):
+                  for tier in ('high','low'):
+                      assert (dest/'assets/models/weapons'/blade/(tier+'.glb')).is_file()
+              assert not (dest/'sw.js').exists(), 'No preview service worker allowed'
+              print('Arthurian Swords loaded at /preview/avalon-arthurian-swords/; original previews untouched')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
