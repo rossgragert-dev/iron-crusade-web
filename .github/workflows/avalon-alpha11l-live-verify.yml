@@ -1,0 +1,59 @@
+name: Verify live Avalon Alpha.11l Stormbreaker preview
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/avalon-alpha11l-live-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify new live game, all six barrels, models and old paths
+        run: |
+          python3 - <<'PY'
+          import re, time, urllib.request
+          ROOT='https://rossgragert-dev.github.io/iron-crusade-web'
+          BASE=ROOT+'/preview/avalon-alpha11l-stormbreaker/'
+          def get(u):
+              link=u if u.startswith('https://') else BASE+u
+              error=None
+              for _ in range(5):
+                  try:
+                      with urllib.request.urlopen(link,timeout=35) as r:
+                          raw=r.read()
+                          assert r.status==200 and raw, 'Unexpected HTTP or empty file'
+                          return raw
+                  except Exception as e:
+                      error=e;time.sleep(5)
+              raise RuntimeError(link+' '+str(error))
+          game=get('index.html?lab=1&quick=1&field=city&arsenalWeapon=stormbreaker&stormbreakerDesign=0').decode()
+          review=get('arsenal-review.html?family=stormbreaker').decode()
+          assert 'Alpha' in game and 'stormbreaker' in review.lower()
+          refs=set(re.findall(r'(?:src|href)="\./(assets/[^"]+)"',game+review))
+          for ref in refs:
+              assert len(get(ref))>100, 'Missing linked asset '+ref
+          js=''
+          for file in ('assets/warMachines-CvAvcgN_.js',
+                       'assets/game-l2np2vh3.js','assets/game-C332Jc1g.js',
+                       'assets/arsenalreview-DHYr4BmT.js',
+                       'assets/modelreview-IideHrhb.js',
+                       'assets/modelAssets-isQC7WhQ.js'):
+              js+=get(file).decode('utf-8')
+          for marker in ('crownwatch-bastion','grey-hunt-viper','sunforge-cyclone',
+                         'pendragon-anvil','grail-gatebreaker','iron-vow','railcutter'):
+              assert marker in js, 'Absent real model '+marker
+          for item in ('assets/models/sovereign/high.glb',
+                       'assets/models/weapons/crown_of_logres/high.glb',
+                       'assets/models/weapons/grey_hunt_blade/high.glb',
+                       'assets/audio/heavyFire-0.wav'):
+              assert len(get(item))>1000,'Missing existing binary '+item
+          for previous in ('avalon-alpha11k-hammers','avalon-heritage-blades-v2',
+                           'avalon-alpha11i-arsenal-reforged','avalon-alpha11h-third-person'):
+              assert len(get(ROOT+'/preview/'+previous+'/index.html'))>300
+          print('PASS: live Alpha.11l Stormbreaker game, all three new cannon models, prior weapon models and old previews')
+          print('PLAY:',BASE+'index.html?lab=1&quick=1&field=city&arsenalWeapon=stormbreaker&stormbreakerDesign=0')
+          print('REVIEW:',BASE+'arsenal-review.html?family=stormbreaker')
+          PY
