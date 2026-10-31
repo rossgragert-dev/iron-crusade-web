@@ -1,0 +1,67 @@
+name: Verify live Avalon Alpha.11k hammers and chainblades
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/avalon-alpha11k-live-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check live assets and all integrated weapon models
+        run: |
+          python3 - <<'PY'
+          import re, time, urllib.request
+          ROOT='https://rossgragert-dev.github.io/iron-crusade-web'
+          BASE=ROOT+'/preview/avalon-alpha11k-hammers/'
+          def fetch(p):
+              url=p if p.startswith('https://') else BASE+p
+              error=None
+              for i in range(6):
+                  try:
+                      with urllib.request.urlopen(url,timeout=30) as r:
+                          data=r.read()
+                          assert r.status==200 and data, 'Empty response '+url
+                          return data
+                  except Exception as e:
+                      error=e
+                      time.sleep(4)
+              raise RuntimeError(url+': '+str(error))
+          html=fetch('index.html?lab=1&quick=1').decode('utf-8')
+          review=fetch('arsenal-review.html?family=kingshammer').decode('utf-8')
+          assert 'Alpha' in html and 'kingshammer' in review.lower()
+          names=set(re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html+review))
+          assert names and any(n.endswith('.js') for n in names)
+          js=''
+          seen=set()
+          pending=[n for n in names if n.endswith('.js')]
+          while pending:
+              n=pending.pop()
+              if n in seen:continue
+              seen.add(n)
+              raw=fetch(n)
+              assert len(raw)>100, 'Suspect compiled chunk '+n
+              content=raw.decode('utf-8')
+              js+=content
+              for q in re.findall(r'[A-Za-z0-9_-]+-[A-Za-z0-9_-]{6,}\.js',content):
+                  name='assets/'+q
+                  if name not in seen:pending.append(name)
+              assert len(seen)<45, 'Unexpected asset graph explosion'
+          for design in ('pendragon-anvil','sunfall-piledriver','grail-gatebreaker','breacher','railcutter','iron-vow'):
+              assert design in js,'Missing live 3D weapon '+design
+          for item in ('assets/models/weapons/grailblade/high.glb',
+                        'assets/models/weapons/crown_of_logres/high.glb',
+                        'assets/models/weapons/grey_hunt_blade/high.glb',
+                        'assets/models/sovereign/low.glb'):
+              assert len(fetch(item))>1000, 'Missing accepted 3D asset '+item
+          for old in ('/preview/avalon-heritage-blades-v2/index.html',
+                      '/preview/avalon-alpha11h-third-person/index.html',
+                      '/preview/avalon-alpha11i-arsenal-reforged/index.html'):
+              assert len(fetch(ROOT+old))>300, 'Existing preview was lost'
+          print('PASS live Alpha.11k:',len(seen),'compiled chunks; three hammers; three moving-chain models; accepted GLBs; older previews intact')
+          print('Hammer review:',BASE+'arsenal-review.html?family=kingshammer')
+          print('Game:',BASE+'index.html?lab=1&quick=1&field=city&arsenalWeapon=kingshammer&kingshammerDesign=0')
+          PY
