@@ -31,7 +31,7 @@ jobs:
               raise RuntimeError(link+' '+str(error))
           game=get('index.html?lab=1&quick=1&field=city&arsenalWeapon=stormbreaker&stormbreakerDesign=0').decode()
           review=get('arsenal-review.html?family=stormbreaker').decode()
-          assert 'Alpha' in game and 'stormbreaker' in review.lower()
+          assert 'Alpha' in game and 'data-family="stormbreaker"' in review and 'ALPHA.11l' in review, 'Missing selectable Stormbreaker review tab'
           refs=set(re.findall(r'(?:src|href)="\./(assets/[^"]+)"',game+review))
           for ref in refs:
               assert len(get(ref))>100, 'Missing linked asset '+ref
