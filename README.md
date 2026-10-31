@@ -93,3 +93,7 @@ Isolated at `/preview/avalon-alpha11g-fp-visibility/` (earlier fp-view, cannon-f
 
 ## Alpha.11g final Sovereign combat controls (test build)
 Isolated at `/preview/avalon-alpha11g-combat-controls/` (earlier previews preserved). Built by the private repo's GitHub Action at source commit fea2db6. Open with `?lab=1&quick=1`. Not approved until tested on a physical iPhone.
+
+
+## Alpha.11h — The Vanguard Reforged (Stage B test build)
+Isolated at `/preview/avalon-alpha11h/` (the Sovereign previews and the approved release are untouched). Built by the private repo's GitHub Action on branch `development/alpha11h-vanguard-reforged` at source commit 3994419. Open with `?lab=1&quick=1`; in the Development Lab switch between Warden, Reaver, Arbalest and Sovereign. Not approved until tested on a physical iPhone.
