@@ -18,6 +18,7 @@ on:
       - avalon-warframes-alpha11g-fp-visibility-preview.zip
       - avalon-warframes-alpha11g-combat-controls-preview.zip
       - avalon-warframes-alpha11h-preview.zip
+      - avalon-warframes-alpha11h-third-person-preview.zip
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -502,6 +503,43 @@ jobs:
               assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
               print('Alpha.11h Vanguard preview isolated at /preview/avalon-alpha11h/')
           PY
+      - name: Extract Avalon Warframes Alpha.11h third-person camera and gun-aim preview (isolated)
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          source=Path('avalon-warframes-alpha11h-third-person-preview.zip')
+          if not source.exists():
+              print('Optional third-person preview ZIP not uploaded; skipping.')
+          else:
+              dest=Path('site/preview/avalon-alpha11h-third-person')
+              dest.mkdir(parents=True,exist_ok=True)
+              with ZipFile(source) as z:
+                  assert z.testzip() is None, 'Third-person ZIP corrupt'
+                  for info in z.infolist():
+                      path=Path(info.filename)
+                      assert not path.is_absolute() and '..' not in path.parts, 'Unsafe path'
+                      assert (info.external_attr>>16)&0o170000 != 0o120000, 'Symlinks not allowed'
+                  z.extractall(dest)
+              html=(dest/'index.html').read_text()
+              assert (dest/'review.html').is_file()
+              for asset in re.findall(r'(?:src|href)="\./(assets/[^"]+)"',html):
+                  assert (dest/asset).is_file(), f'Missing asset {asset}'
+              scripts='\n'.join(f.read_text() for f in (dest/'assets').glob('*.js'))
+              for marker in ('swordreview','rvToggle','quick','SOVEREIGN','fp-viewmodel','lostpointercapture','legacyTitans','avalon-body'):
+                  assert marker in scripts, f'Missing build marker: {marker}'
+              assert len(list((dest/'assets/audio').glob('*.wav'))) == 55, 'Incomplete audio bank'
+              for chassis in ('redemptor','brutalis','ballistus','sovereign'):
+                  for lod in ('low','mid','high'):
+                      assert (dest/'assets/models'/chassis/(lod+'.glb')).is_file(), f'Missing {chassis}/{lod}'
+              for chassis in ('warden','reaver','arbalest'):
+                  for lod in ('low','mid','high'):
+                      assert (dest/'assets/models/vanguard'/chassis/(lod+'.glb')).is_file(), f'Missing vanguard/{chassis}/{lod}'
+              assert (dest/'assets/models/weapons/grailblade/high.glb').is_file(), 'Missing Grailblade'
+              assert not (dest/'sw.js').exists(), 'Do not install preview service worker'
+              print('Alpha.11h third-person preview isolated at /preview/avalon-alpha11h-third-person/')
+          PY
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
@@ -550,6 +588,7 @@ jobs:
               for m in markers: assert m in js, 'missing marker '+m
               print(f'{name} OK: {len(assets)+len(extra)} files, {total/1e6:.1f} MB, entry {P}index.html?lab=1&quick=1')
 
+            check('avalon-alpha11h-third-person', ('swordreview','quick','fp-viewmodel','avalon-body','aimdebug'), tuple('assets/models/vanguard/%s/%s.glb'%(c,t) for c in ('warden','reaver','arbalest') for t in ('low','mid','high')))
             check('avalon-alpha11h', ('swordreview','rvToggle','quick','fp-viewmodel','lostpointercapture','legacyTitans','avalon-body'), tuple('assets/models/vanguard/%s/%s.glb'%(c,t) for c in ('warden','reaver','arbalest') for t in ('low','mid','high')))
             check('avalon-alpha11g-combat-controls', ('swordreview','rvToggle','quick','fp-viewmodel','lostpointercapture'))
             check('avalon-alpha11g-fp-visibility', ('swordreview','rvToggle','quick','fp-viewmodel'))
