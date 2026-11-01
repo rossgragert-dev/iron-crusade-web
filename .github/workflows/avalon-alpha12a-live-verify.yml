@@ -43,7 +43,7 @@ jobs:
           bundle=''
           overlay=Path('avalon-story-alpha12a-overlay/assets')
           assert overlay.is_dir(),'Missing built release overlay'
-          for file in overlay.glob('*.js'):
+          for file in list(overlay.glob('*.js'))+list(Path('avalon-cinematics-alpha11p-overlay/assets').glob('*.js')):
               bundle+=fetch('assets/'+file.name).decode()
           for token in ('broken-signal','grey-hunt','long-table',
                         'campaignSelect','campaignStage','setStory','setWaypoint',
