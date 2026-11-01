@@ -1,0 +1,15 @@
+{
+  "release": "Alpha.12a",
+  "title": "War of the Broken Roads · Chapter I",
+  "source_commit": "fcec7ff1eb6c3045de3ccf510cdf2bf613f7c4a4",
+  "candidate_source_sha": "c26f3cdc4f9078c9df96b0861176384e8377881a",
+  "ci_run": 41259678994,
+  "baseline": "avalon-alpha11p-cinematics",
+  "chapters": [
+    "The Broken Road",
+    "Echoes in the Ash",
+    "No Road Abandoned"
+  ],
+  "storage": "separate persistent campaign unlocks; prior RPG/Arsenal keys unchanged",
+  "qa": "Node rules + legacy combat regressions + Chromium WebGL, actual six enemy death hooks, mission advance and settings"
+}
