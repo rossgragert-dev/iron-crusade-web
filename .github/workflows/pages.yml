@@ -30,6 +30,7 @@ on:
       - 'avalon-cinderfall-alpha11n-overlay/**'
       - 'avalon-crownfall-alpha11o-overlay/**'
       - 'avalon-cinematics-alpha11p-overlay/**'
+      - 'avalon-story-alpha12a-overlay/**'
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -900,6 +901,40 @@ jobs:
               assert (dest/binary).is_file(), 'Missing original playable binary '+binary
           assert not (dest/'sw.js').exists(),'No service worker in isolated preview'
           print('PASS Alpha.11p cinematic preview composition:',n,'new compiled text files, previous game assets retained')
+          PY
+      - name: Assemble isolated Alpha.12a Broken Roads playable story campaign
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,shutil
+          baseline=Path('site/preview/avalon-alpha11p-cinematics')
+          overlay=Path('avalon-story-alpha12a-overlay')
+          output=Path('site/preview/avalon-alpha12a-broken-roads')
+          assert baseline.is_dir() and overlay.is_dir(),'Missing preceding Cinematic build or new story overlay'
+          shutil.copytree(baseline,output)
+          count=0
+          for file in overlay.rglob('*'):
+              if not file.is_file():continue
+              target=output/file.relative_to(overlay)
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(file,target);count+=1
+          for html in ('index.html','arsenal-review.html','review.html','model-review.html'):
+              assert (output/html).is_file(),'Missing '+html
+              for asset in re.findall(r'(?:src|href)="[.]/(assets/[^"]+)"',(output/html).read_text()):
+                  assert (output/asset).is_file(),'Missing Vite dependency '+asset
+          code=' '.join(p.read_text() for p in overlay.glob('assets/*.js'))
+          for marker in ('broken-signal','grey-hunt','long-table',
+                         'campaignSelect','campaignStage','setStory','setWaypoint',
+                         'logres-thunder','crownfire-bastion','dawnspire-lance','iron-vow'):
+              assert marker in code,'Missing real mission, settings or retained weapon '+marker
+          for binary in ('assets/models/sovereign/high.glb',
+                         'assets/models/weapons/crown_of_logres/high.glb',
+                         'assets/audio/artillery-0.wav',
+                         'assets/audio/heavyFire-0.wav',
+                         'assets/audio/missile-0.wav'):
+              assert (output/binary).is_file(),'Missing inherited complete game asset '+binary
+          assert not (output/'sw.js').exists(),'Isolated previews must not override PWA caching'
+          print('PASS Alpha.12a Chapter I preserved',count,'compiled source files and all earlier Alpha.11p game assets')
           PY
       - name: Configure Pages
         uses: actions/configure-pages@v5

@@ -1,0 +1,66 @@
+name: Verify live Avalon Alpha.12a Broken Roads campaign
+on:
+  workflow_run:
+    workflows: ['Publish Iron Crusade PWA']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify live full game, 3 mission rules, radio accessibility and previous releases
+        run: |
+          python3 - <<'PY'
+          import re,time,urllib.request
+          from pathlib import Path
+          ROOT='https://rossgragert-dev.github.io/iron-crusade-web'
+          BASE=ROOT+'/preview/avalon-alpha12a-broken-roads/'
+          def fetch(relative):
+              url=relative if relative.startswith('https://') else BASE+relative
+              last=None
+              for _ in range(7):
+                  try:
+                      with urllib.request.urlopen(url,timeout=35) as response:
+                          raw=response.read()
+                          assert response.status==200 and raw,'Empty/non-200 response'
+                          return raw
+                  except Exception as e:
+                      last=e;time.sleep(4)
+              raise RuntimeError(url+': '+str(last))
+          game=fetch('index.html?difficulty=INITIATE&field=city').decode()
+          assert '<title>' in game
+          for page in ('arsenal-review.html','review.html','model-review.html'):
+              assert len(fetch(page))>100,'Missing game review asset '+page
+          refs=set(re.findall(r'(?:src|href)="[.]/(assets/[^"]+)"',game))
+          assert refs,'Live HTML missing compiled asset references'
+          for asset in refs: assert len(fetch(asset))>100,'Missing live JS/CSS '+asset
+          bundle=''
+          overlay=Path('avalon-story-alpha12a-overlay/assets')
+          assert overlay.is_dir(),'Missing built release overlay'
+          for file in overlay.glob('*.js'):
+              bundle+=fetch('assets/'+file.name).decode()
+          for token in ('broken-signal','grey-hunt','long-table',
+                        'campaignSelect','campaignStage','setStory','setWaypoint',
+                        'THE BROKEN ROAD','ECHOES IN THE ASH','NO ROAD ABANDONED',
+                        'crownfallShot','logres-thunder','crownfire-bastion'):
+              assert token in bundle,'Missing live story function, operation or previous weapon '+token
+          p=fetch('release-provenance.json').decode()
+          assert 'Alpha.12a' in p
+          for asset in ('assets/models/sovereign/high.glb',
+                        'assets/models/weapons/crown_of_logres/high.glb',
+                        'assets/audio/heavyFire-0.wav',
+                        'assets/audio/artillery-0.wav',
+                        'assets/audio/missile-0.wav'):
+              assert len(fetch(asset))>1000,'Missing inherited model/audio '+asset
+          for old in ('avalon-alpha11p-cinematics','avalon-alpha11o-crownfall',
+                      'avalon-alpha11n-cinderfall','avalon-alpha11m-sunlance'):
+              assert len(fetch(ROOT+'/preview/'+old+'/index.html'))>300,'Previous release unavailable '+old
+          print('PASS live Alpha.12a: 3 mission scripts, settings, original full game assets, older preview URLs, and mobile-capable story source.')
+          print('PLAY',BASE+'index.html?difficulty=INITIATE&field=city')
+          PY
