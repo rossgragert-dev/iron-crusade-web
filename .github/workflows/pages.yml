@@ -922,7 +922,7 @@ jobs:
               assert (output/html).is_file(),'Missing '+html
               for asset in re.findall(r'(?:src|href)="[.]/(assets/[^"]+)"',(output/html).read_text()):
                   assert (output/asset).is_file(),'Missing Vite dependency '+asset
-          code=' '.join(p.read_text() for p in overlay.glob('assets/*.js'))
+          code=' '.join(p.read_text() for p in output.glob('assets/*.js'))
           for marker in ('broken-signal','grey-hunt','long-table',
                          'campaignSelect','campaignStage','setStory','setWaypoint',
                          'logres-thunder','crownfire-bastion','dawnspire-lance','iron-vow'):
